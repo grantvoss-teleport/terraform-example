@@ -1,0 +1,33 @@
+# Example values — copy to terraform.tfvars and fill in real values.
+# Do NOT commit terraform.tfvars if it contains secrets.
+
+teleport_addr          = "teleport.example.com:443"
+teleport_identity_file = "terraform-identity"
+
+role_prefix = "coupang"
+role_suffix = "1"
+
+node_label_key   = "cmdb_role"
+node_label_value = "exception_role_1"
+ssh_logins       = ["root", "ubuntu"]
+
+max_session_ttl      = "30h0m0s"
+request_max_duration = "8h0m0s"
+approval_threshold   = 1
+denial_threshold     = 1
+
+access_list_title       = "Exception_role_1"
+access_list_description = ""
+audit_frequency_months  = 6
+audit_day_of_month      = 1
+audit_next_date         = "2026-12-05T08:00:00Z"
+access_list_owner       = "noam.zimet@goteleport.com"
+
+local_acl_members = [
+  "grant.voss@goteleport.com",
+]
+
+# extra_granted_roles is intentionally empty for production.
+# For testing only, you can temporarily add pre-existing roles, e.g.:
+#   extra_granted_roles = ["auditor", "editor"]
+extra_granted_roles = []
