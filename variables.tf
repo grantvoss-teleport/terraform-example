@@ -10,12 +10,12 @@ variable "teleport_identity_file" {
 }
 
 # ---------------------------------------------------------------------------
-# Access role name prefix (e.g. "coupang" → produces coupang-access-1, etc.)
+# Access role name prefix (e.g. "ACME" → produces ACME-access-1, etc.)
 # ---------------------------------------------------------------------------
 variable "role_prefix" {
   type        = string
   description = "Short prefix used to namespace all role and ACL names"
-  default     = "coupang"
+  default     = "ACME"
 }
 
 variable "role_suffix" {

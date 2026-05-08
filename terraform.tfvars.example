@@ -4,7 +4,7 @@
 teleport_addr          = "teleport.example.com:443"
 teleport_identity_file = "terraform-identity"
 
-role_prefix = "coupang"
+role_prefix = "ACME"
 role_suffix = "1"
 
 node_label_key   = "cmdb_role"

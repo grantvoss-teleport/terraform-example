@@ -1,6 +1,6 @@
 # terraform-example
 
-Terraform module for managing Teleport Access Control resources for Coupang.
+Terraform module for managing Teleport Access Control resources for ACME.
 
 ## Requirements
 
@@ -26,23 +26,23 @@ Terraform module for managing Teleport Access Control resources for Coupang.
 
 ```
 Requester user
-  │  holds → coupang-requester-1
-  │           └─ can request → coupang-access-1
+  │  holds → ACME-requester-1
+  │           └─ can request → ACME-access-1
   │
   └─ submits access request
            │
            ▼
   Reviewer user
-    holds → coupang-reviewer-exception-1
+    holds → ACME-reviewer-exception-1
              └─ can review if trait cmdb_role_acl contains "exception_role_1"
                            │
                            ▼
-                 coupang-access-1 granted (max 8h)
+                 ACME-access-1 granted (max 8h)
                    └─ SSH to nodes where cmdb_role=exception_role_1
                       as root or ubuntu
 
 ACL hierarchy:
-  coupang-acl-exception-1  (parent — managed by Terraform, type=static)
+  ACME-acl-exception-1  (parent — managed by Terraform, type=static)
   ├── exception_users       (child list, membership_kind=2 — pre-existing, nested only)
   └── grant.voss+1@...      (user members from local_acl_members, membership_kind=1)
 ```
@@ -62,8 +62,8 @@ contains(reviewer.traits["cmdb_role_acl"], "exception_role_1")
 ```
 
 The `cmdb_role_acl` trait is granted to ACL members via the parent ACL's
-`grants.traits` block, so any user added to `coupang-acl-exception-1` can
-review requests for `coupang-access-1`.
+`grants.traits` block, so any user added to `ACME-acl-exception-1` can
+review requests for `ACME-access-1`.
 
 ### ACL nesting
 
@@ -105,7 +105,7 @@ terraform apply
 | Variable | Default | Description |
 |---|---|---|
 | `teleport_addr` | — | Proxy address, e.g. `cluster.teleport.sh:443` |
-| `role_prefix` | `coupang` | Prefix for all role/ACL names |
+| `role_prefix` | `ACME` | Prefix for all role/ACL names |
 | `role_suffix` | `1` | Suffix for all role/ACL names |
 | `node_label_key` | `cmdb_role` | Node label key for access scoping |
 | `node_label_value` | `exception_role_1` | Node label value for access scoping |
