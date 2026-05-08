@@ -1,18 +1,20 @@
 # ---------------------------------------------------------------------------
-# 1. Access role — grants SSH access to labelled nodes
+# Access roles — one per role set, grants SSH to labelled nodes
 # ---------------------------------------------------------------------------
 resource "teleport_role" "access" {
+  for_each = var.role_sets
+
   version = "v8"
 
   metadata = {
-    name = local.access_role_name
+    name = "${var.role_prefix}-access-${each.key}"
   }
 
   spec = {
     allow = {
       logins = var.ssh_logins
       node_labels = {
-        (var.node_label_key) = [var.node_label_value]
+        (var.node_label_key) = [each.value.node_label_value]
       }
     }
 
@@ -38,19 +40,21 @@ resource "teleport_role" "access" {
 }
 
 # ---------------------------------------------------------------------------
-# 2. Requester role — allows users to request the access role
+# Requester roles — one per role set
 # ---------------------------------------------------------------------------
 resource "teleport_role" "requester" {
+  for_each = var.role_sets
+
   version = "v8"
 
   metadata = {
-    name = local.requester_role_name
+    name = "${var.role_prefix}-requester-${each.key}"
   }
 
   spec = {
     allow = {
       request = {
-        search_as_roles = [teleport_role.access.metadata.name]
+        search_as_roles = [teleport_role.access[each.key].metadata.name]
         max_duration    = var.request_max_duration
         thresholds = [
           {
@@ -85,22 +89,23 @@ resource "teleport_role" "requester" {
 }
 
 # ---------------------------------------------------------------------------
-# 3. Reviewer role — allows reviewing requests for the access role,
-#    scoped to users whose cmdb_role_acl trait contains the target value
+# Reviewer roles — one per role set
 # ---------------------------------------------------------------------------
 resource "teleport_role" "reviewer" {
+  for_each = var.role_sets
+
   version = "v8"
 
   metadata = {
-    name = local.reviewer_role_name
+    name = "${var.role_prefix}-reviewer-exception-${each.key}"
   }
 
   spec = {
     allow = {
       review_requests = {
-        preview_as_roles = [teleport_role.access.metadata.name]
-        roles            = [teleport_role.access.metadata.name]
-        where            = "contains(reviewer.traits[\"${local.acl_trait_key}\"], \"${local.acl_trait_value}\")"
+        preview_as_roles = [teleport_role.access[each.key].metadata.name]
+        roles            = [teleport_role.access[each.key].metadata.name]
+        where            = "contains(reviewer.traits[\"${local.acl_trait_key}\"], \"${each.value.node_label_value}\")"
       }
     }
 

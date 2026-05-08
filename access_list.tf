@@ -11,21 +11,21 @@ data "teleport_access_list" "exception_users" {
 }
 
 # ---------------------------------------------------------------------------
-# Access List
-# Membership grants: requester role, reviewer role, the cmdb_role_acl trait,
-# plus any extra roles (auditor, editor) passed in via variables.
+# Access Lists — one per role set
 # ---------------------------------------------------------------------------
 resource "teleport_access_list" "exception_role" {
+  for_each = var.role_sets
+
   header = {
     version = "v1"
     metadata = {
-      name = "${var.role_prefix}-acl-exception-${var.role_suffix}"
+      name = "${var.role_prefix}-acl-exception-${each.key}"
     }
   }
 
   spec = {
-    title       = var.access_list_title
-    description = var.access_list_description
+    title       = each.value.acl_title
+    description = each.value.acl_description
     type        = "static"
 
     owners = [
@@ -34,7 +34,6 @@ resource "teleport_access_list" "exception_role" {
       }
     ]
 
-    # No prerequisite roles/traits needed to become a member
     membership_requires = {
       roles  = []
       traits = []
@@ -49,14 +48,14 @@ resource "teleport_access_list" "exception_role" {
       roles = concat(
         var.extra_granted_roles,
         [
-          teleport_role.requester.metadata.name,
-          teleport_role.reviewer.metadata.name,
+          teleport_role.requester[each.key].metadata.name,
+          teleport_role.reviewer[each.key].metadata.name,
         ]
       )
       traits = [
         {
           key    = local.acl_trait_key
-          values = [local.acl_trait_value]
+          values = [each.value.node_label_value]
         }
       ]
     }
@@ -69,7 +68,7 @@ resource "teleport_access_list" "exception_role" {
     audit = {
       next_audit_date = var.audit_next_date
       notifications = {
-        start = "336h0m0s" # 14-day heads-up, matching source config
+        start = "336h0m0s"
       }
       recurrence = {
         frequency    = var.audit_frequency_months
@@ -85,22 +84,22 @@ resource "teleport_access_list" "exception_role" {
 }
 
 # ---------------------------------------------------------------------------
-# Access List members — one resource per local user
+# ACL user members — one per (role set, user) pair
 # ---------------------------------------------------------------------------
 resource "teleport_access_list_member" "acl_members" {
-  for_each = toset(var.local_acl_members)
+  for_each = local.all_members_flat
 
   header = {
     version = "v1"
     metadata = {
-      name = each.value
+      name = each.value.user
     }
   }
 
   spec = {
-    access_list     = teleport_access_list.exception_role.id
-    name            = each.value
-    membership_kind = 1 # 1 = MEMBERSHIP_KIND_USER
+    access_list     = teleport_access_list.exception_role[each.value.suffix].id
+    name            = each.value.user
+    membership_kind = 1 # MEMBERSHIP_KIND_USER
   }
 
   depends_on = [
@@ -110,10 +109,11 @@ resource "teleport_access_list_member" "acl_members" {
 }
 
 # ---------------------------------------------------------------------------
-# Nest exception_users as a child list member of the new ACL
-# (new ACL is the parent; exception_users inherits its grants)
+# Nest exception_users as a child list under each parent ACL
 # ---------------------------------------------------------------------------
 resource "teleport_access_list_member" "exception_users_nested" {
+  for_each = var.role_sets
+
   header = {
     version = "v1"
     metadata = {
@@ -122,8 +122,8 @@ resource "teleport_access_list_member" "exception_users_nested" {
   }
 
   spec = {
-    access_list     = teleport_access_list.exception_role.id
-    membership_kind = 2 # 2 = MEMBERSHIP_KIND_LIST
+    access_list     = teleport_access_list.exception_role[each.key].id
+    membership_kind = 2 # MEMBERSHIP_KIND_LIST
   }
 
   depends_on = [teleport_access_list.exception_role]

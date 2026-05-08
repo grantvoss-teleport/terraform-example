@@ -1,12 +1,8 @@
 # ---------------------------------------------------------------------------
-# Local users
-# One teleport_user per entry in var.local_acl_members.
-# The user is given the requester and reviewer roles so they can both
-# raise and review access requests. The ACL grants the cmdb_role_acl
-# trait which the reviewer predicate checks at review time.
+# Local users — one per unique username across all role sets
 # ---------------------------------------------------------------------------
 resource "teleport_user" "acl_members" {
-  for_each = toset(var.local_acl_members)
+  for_each = local.unique_users
 
   version = "v2"
 
@@ -15,13 +11,19 @@ resource "teleport_user" "acl_members" {
   }
 
   spec = {
-    roles = [
-      teleport_role.requester.metadata.name,
-      teleport_role.reviewer.metadata.name,
-    ]
+    roles = flatten([
+      for suffix, rs in var.role_sets :
+      contains(rs.local_acl_members, each.value) ? [
+        teleport_role.requester[suffix].metadata.name,
+        teleport_role.reviewer[suffix].metadata.name,
+      ] : []
+    ])
     traits = {
-      # Populated here for local users; SSO users receive this via their IdP
-      (local.acl_trait_key) = [local.acl_trait_value]
+      (local.acl_trait_key) = [
+        for suffix, rs in var.role_sets :
+        rs.node_label_value
+        if contains(rs.local_acl_members, each.value)
+      ]
     }
   }
 
