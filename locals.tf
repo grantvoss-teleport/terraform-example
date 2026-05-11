@@ -19,13 +19,12 @@ locals {
     ssh_file_copy = true
   }
 
-  # Flatten members across all role sets into a unique map keyed by
-  # "suffix/username" — used to create teleport_user resources.
-  # Deduplicates users that appear in multiple sets.
+  # Flatten ALL members (local + sso) across all role sets into a unique map
+  # keyed by "suffix/username" — used to create teleport_access_list_member resources.
   all_members_flat = {
     for pair in flatten([
       for suffix, rs in var.role_sets : [
-        for user in rs.local_acl_members : {
+        for user in concat(rs.local_acl_members, rs.sso_acl_members) : {
           key    = "${suffix}/${user}"
           suffix = suffix
           user   = user
@@ -34,7 +33,7 @@ locals {
     ]) : pair.key => pair
   }
 
-  # Unique usernames across all sets — for teleport_user creation
+  # Only local (non-SSO) users — for teleport_user creation
   unique_users = toset(flatten([
     for rs in var.role_sets : rs.local_acl_members
   ]))

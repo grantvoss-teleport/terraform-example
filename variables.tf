@@ -78,7 +78,7 @@ variable "audit_next_date" {
 variable "exception_users_acl_name" {
   type        = string
   description = "Metadata name (UUID) of the pre-existing exception_users Access List"
-  default     = "38a5ad8f-7646-4f87-8d6f-ae6020270f70"
+  default     = "6fcd4bf0-1f79-4351-891e-2bdf29d6f5f9"
 }
 
 # ---------------------------------------------------------------------------
@@ -106,6 +106,7 @@ variable "role_sets" {
     acl_title         = string
     acl_description   = string
     local_acl_members = list(string)
+    sso_acl_members   = list(string)
   }))
   description = "Map of role set suffix → configuration. Each entry produces one full set of roles and an ACL."
   default = {
@@ -113,19 +114,22 @@ variable "role_sets" {
       node_label_value  = "db_admin_prod"
       acl_title         = "DB Admin Prod"
       acl_description   = "Production database administrators"
-      local_acl_members = ["grant.voss+1@goteleport.com"]
+      local_acl_members = []
+      sso_acl_members   = ["user+2@goteleport.com"]
     }
     "k8s-ops" = {
       node_label_value  = "k8s_ops_staging"
       acl_title         = "K8s Ops Staging"
       acl_description   = "Kubernetes operators for staging cluster"
-      local_acl_members = ["grant.voss+2@goteleport.com"]
+      local_acl_members = []
+      sso_acl_members   = ["user+3@goteleport.com"]
     }
     "sec-break-glass" = {
       node_label_value  = "security_break_glass"
       acl_title         = "Security Break Glass"
       acl_description   = "Emergency break-glass access for security team"
-      local_acl_members = ["grant.voss+3@goteleport.com"]
+      local_acl_members = []
+      sso_acl_members   = ["user+2@goteleport.com", "user+4@goteleport.com"]
     }
   }
 }

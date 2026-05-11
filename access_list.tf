@@ -104,7 +104,6 @@ resource "teleport_access_list_member" "acl_members" {
 
   depends_on = [
     teleport_access_list.exception_role,
-    teleport_user.acl_members,
   ]
 }
 
