@@ -2,7 +2,7 @@ terraform {
   required_providers {
     teleport = {
       source  = "terraform.releases.teleport.dev/gravitational/teleport"
-      version = "= 18.7.3"
+      version = "= 18.7.6"
     }
   }
 }
