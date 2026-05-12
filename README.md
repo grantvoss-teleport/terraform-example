@@ -30,19 +30,22 @@ role_sets = {
     node_label_value  = "db_admin_prod"
     acl_title         = "DB Admin Prod"
     acl_description   = "Production database administrators"
-    local_acl_members = ["alice@example.com"]
+    local_acl_members = []
+    sso_acl_members = ["user+2@goteleport.com"] 
   }
   "k8s-ops" = {
     node_label_value  = "k8s_ops_staging"
     acl_title         = "K8s Ops Staging"
     acl_description   = "Kubernetes operators for staging cluster"
-    local_acl_members = ["bob@example.com"]
+    local_acl_members = []
+    sso_acl_members   = ["user+3@goteleport.com"]
   }
   "sec-break-glass" = {
     node_label_value  = "security_break_glass"
     acl_title         = "Security Break Glass"
     acl_description   = "Emergency break-glass access for security team"
-    local_acl_members = ["carol@example.com"]
+    local_acl_members = []
+    sso_acl_members   = ["user+2@goteleport.com", "user+4@goteleport.com"]
   }
 }
 ```
