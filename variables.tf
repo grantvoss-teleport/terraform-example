@@ -1,6 +1,7 @@
 variable "teleport_addr" {
   type        = string
   description = "Teleport proxy/auth address, e.g. teleport.example.com:443"
+  default     = "teleport.example.com:443"
 }
 
 variable "teleport_identity_file" {
@@ -54,7 +55,7 @@ variable "denial_threshold" {
 variable "access_list_owner" {
   type        = string
   description = "Teleport username of the Access List owner"
-  default     = "grant.voss@goteleport.com"
+  default     = "user@example.com"
 }
 
 variable "audit_frequency_months" {
