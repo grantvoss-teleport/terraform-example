@@ -21,7 +21,7 @@ access_list_description = ""
 audit_frequency_months  = 6
 audit_day_of_month      = 1
 audit_next_date         = "2026-12-05T08:00:00Z"
-access_list_owner       = "noam.zimet@goteleport.com"
+access_list_owner       = "user@goteleport.com"
 
 local_acl_members = [
   "grant.voss@goteleport.com",
