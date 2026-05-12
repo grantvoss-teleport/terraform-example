@@ -110,8 +110,6 @@ All roles use `version = "v8"`, which requires Teleport cluster >= 18 and Terraf
 ## Usage
 
 ```sh
-cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars — set teleport_addr and define your role_sets
 
 eval "$(tctl terraform env)"
 terraform init
