@@ -136,9 +136,9 @@ variable "role_sets" {
       node_label_value  = "security_break_glass"
       acl_title         = "Security Break Glass"
       acl_description   = "Emergency break-glass access for security team"
-      ad_group_name     = ""
+      ad_group_name     = "GRP-Teleport-Sec-BreakGlass"
       local_acl_members = []
-      sso_acl_members   = ["user+2@goteleport.com", "user+4@goteleport.com"]
+      sso_acl_members   = []
     }
   }
 }
@@ -150,20 +150,17 @@ variable "role_sets" {
 variable "ad_server_hostname" {
   type        = string
   description = "Hostname or IP of the 2025 Active Directory server (WinRM endpoint)"
-  default     = "ad.example.com"
 }
 
 variable "ad_bind_username" {
   type        = string
   description = "AD service-account UPN used for WinRM authentication (e.g. svc-terraform@corp.example.com)"
-  default     = "svc-terraform@corp.example.com"
 }
 
 variable "ad_bind_password" {
   type        = string
-  description = "Password for the AD bind/service account. Store in a secrets manager or use TF_VAR_ad_bind_password."
+  description = "Password for the AD bind/service account. Supply via TF_VAR_ad_bind_password env var."
   sensitive   = true
-  default     = ""
 }
 
 variable "ad_winrm_port" {
@@ -186,7 +183,7 @@ variable "ad_winrm_insecure" {
 
 variable "ad_krb_realm" {
   type        = string
-  description = "Kerberos realm (usually the uppercase AD domain, e.g. CORP.EXAMPLE.COM). Leave blank to use NTLM/basic auth."
+  description = "Kerberos realm (uppercase AD domain, e.g. CORP.EXAMPLE.COM). Leave blank to use NTLM/basic auth."
   default     = ""
 }
 
