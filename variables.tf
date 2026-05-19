@@ -1,7 +1,7 @@
 variable "teleport_addr" {
   type        = string
   description = "Teleport proxy/auth address, e.g. teleport.example.com:443"
-  default     = "teleport.example.com:443"
+  default     = "teleport-west.gvteleport.com:443"
 }
 
 variable "teleport_identity_file" {
@@ -116,27 +116,27 @@ variable "role_sets" {
   }))
   description = "Map of role set suffix → configuration. Each entry produces one full set of roles and an ACL. Set ad_group_name to populate members from AD; leave empty to use sso_acl_members directly."
   default = {
-    "db-admin" = {
-      node_label_value  = "db_admin_prod"
-      acl_title         = "DB Admin Prod"
+    "cmdbrole1" = {
+      node_label_value  = "cmdbrole1"
+      acl_title         = "cmdbrole1"
       acl_description   = "Production database administrators"
-      ad_group_name     = "GRP-Teleport-DB-Admin"
+      ad_group_name     = "cmdbrole1"
       local_acl_members = []
       sso_acl_members   = []
     }
-    "k8s-ops" = {
-      node_label_value  = "k8s_ops_staging"
-      acl_title         = "K8s Ops Staging"
+    "cmdbrole2" = {
+      node_label_value  = "cmdbrole2"
+      acl_title         = "cmdbrole2"
       acl_description   = "Kubernetes operators for staging cluster"
-      ad_group_name     = "GRP-Teleport-K8s-Ops"
+      ad_group_name     = "cmdbrole2"
       local_acl_members = []
       sso_acl_members   = []
     }
-    "sec-break-glass" = {
-      node_label_value  = "security_break_glass"
-      acl_title         = "Security Break Glass"
+    "cmdbrole3" = {
+      node_label_value  = "cmdbrole3"
+      acl_title         = "cmdbrole3"
       acl_description   = "Emergency break-glass access for security team"
-      ad_group_name     = "GRP-Teleport-Sec-BreakGlass"
+      ad_group_name     = "cmdbrole3"
       local_acl_members = []
       sso_acl_members   = []
     }
@@ -144,51 +144,21 @@ variable "role_sets" {
 }
 
 # ===========================================================================
-# Active Directory provider settings
+# Active Directory — credentials passed to the PowerShell membership script
 # ===========================================================================
 
 variable "ad_server_hostname" {
   type        = string
-  description = "Hostname or IP of the 2025 Active Directory server (WinRM endpoint)"
+  description = "FQDN or IP of the 2025 Active Directory server. The PowerShell script connects here over WinRM."
 }
 
 variable "ad_bind_username" {
   type        = string
-  description = "AD service-account UPN used for WinRM authentication (e.g. svc-terraform@corp.example.com)"
+  description = "UPN of the AD service account used to query group membership (e.g. svc-terraform@corp.example.com)."
 }
 
 variable "ad_bind_password" {
   type        = string
-  description = "Password for the AD bind/service account. Supply via TF_VAR_ad_bind_password env var."
+  description = "Password for the AD service account. Supply via TF_VAR_ad_bind_password env var — never hardcode."
   sensitive   = true
-}
-
-variable "ad_winrm_port" {
-  type        = number
-  description = "WinRM port (5985 for HTTP, 5986 for HTTPS)"
-  default     = 5986
-}
-
-variable "ad_winrm_proto" {
-  type        = string
-  description = "WinRM protocol: 'http' or 'https'"
-  default     = "https"
-}
-
-variable "ad_winrm_insecure" {
-  type        = bool
-  description = "Skip TLS verification for WinRM. Set false in production."
-  default     = false
-}
-
-variable "ad_krb_realm" {
-  type        = string
-  description = "Kerberos realm (uppercase AD domain, e.g. CORP.EXAMPLE.COM). Leave blank to use NTLM/basic auth."
-  default     = ""
-}
-
-variable "ad_krb_conf" {
-  type        = string
-  description = "Path to a krb5.conf file on the Terraform runner. Leave blank when not using Kerberos."
-  default     = ""
 }

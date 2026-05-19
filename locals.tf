@@ -21,17 +21,18 @@ locals {
 
   # ---------------------------------------------------------------------------
   # AD-sourced members
-  # The hashicorp/ad provider returns each group member's userPrincipalName
-  # (UPN) via the user_principal_name attribute — this is the full
-  # "firstname.lastname@corp.example.com" identity that Teleport sees when
-  # the user authenticates via SSO, so it must be used verbatim as the ACL
-  # member name.  SAMAccountNames are intentionally NOT used here.
+  # The external data source runs scripts/get_ad_group_members.ps1 over WinRM
+  # once per role_set.  The script returns a comma-separated string of UPNs
+  # (e.g. "jane.doe@corp.example.com,john.smith@corp.example.com") under the
+  # key "upns".  We split that back into a list here.
+  # UPNs are used — never SAMAccountNames — because they must exactly match
+  # the SSO identity Teleport receives from the IdP at login time.
   # ---------------------------------------------------------------------------
   ad_sourced_members = {
-    for k, gm in data.ad_group_membership.role_set_members :
+    for k, ext in data.external.ad_group_members :
     k => [
-      for member in gm.group_members : member.user_principal_name
-      if member.user_principal_name != null && member.user_principal_name != ""
+      for upn in split(",", ext.result["upns"]) : upn
+      if upn != ""
     ]
   }
 
