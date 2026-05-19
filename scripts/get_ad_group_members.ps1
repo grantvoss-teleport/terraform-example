@@ -31,6 +31,9 @@
 
 $ErrorActionPreference = "Stop"
 
+# Must be imported before New-PSSession on macOS to load the MI/OMI engine
+Import-Module PSWSMan
+
 $query     = [Console]::In.ReadToEnd() | ConvertFrom-Json
 $server    = $query.server
 $username  = $query.username
