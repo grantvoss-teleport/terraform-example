@@ -1,15 +1,15 @@
 # ---------------------------------------------------------------------------
-# AD group membership via external data source + PowerShell
+# AD group membership via LDAPS + Python
 #
-# The hashicorp/ad provider has no data source for reading group membership
-# (ad_group_membership is a managed resource for writing membership, not
-# reading it).  Instead we invoke a PowerShell script over WinRM once per
-# role_set that has a non-empty ad_group_name.
+# Uses ldap3 (pure Python) over LDAPS port 636 to query AD group membership
+# recursively, returning member UPNs as a comma-separated string.
 #
-# The script returns a flat JSON object:
-#   { "upns": "jane.doe@corp.example.com,john.smith@corp.example.com" }
+# Requirements on the Terraform runner:
+#   /opt/homebrew/bin/python3 with ldap3 + pycryptodome:
+#   /opt/homebrew/bin/python3 -m pip install ldap3 pycryptodome --break-system-packages
 #
-# locals.tf splits the comma-separated string back into a list of UPNs.
+# Input:  { server, username, password, group_name }
+# Output: { "upns": "user1@corp.com,user2@corp.com" }
 # ---------------------------------------------------------------------------
 
 data "external" "ad_group_members" {
@@ -19,8 +19,8 @@ data "external" "ad_group_members" {
   }
 
   program = [
-    "pwsh", "-NonInteractive", "-NoProfile", "-File",
-    "${path.module}/scripts/get_ad_group_members.ps1"
+    "/opt/homebrew/bin/python3",
+    "${path.module}/scripts/get_ad_group_members.py"
   ]
 
   query = {
