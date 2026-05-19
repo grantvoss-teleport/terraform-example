@@ -11,11 +11,6 @@ terraform {
   }
 }
 
-provider "teleport" {
-  addr               = var.teleport_addr
-  identity_file_path = var.teleport_identity_file != "" ? var.teleport_identity_file : null
-}
-
 provider "ad" {
   winrm_hostname = var.ad_server_hostname
   winrm_username = var.ad_bind_username

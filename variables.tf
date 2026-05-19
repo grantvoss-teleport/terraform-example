@@ -106,31 +106,92 @@ variable "role_sets" {
     node_label_value  = string
     acl_title         = string
     acl_description   = string
+    # ad_group_name: the sAMAccountName or DN of the AD group whose members
+    # should be added to this Access List. When non-empty the provider will
+    # look up group membership from AD and ignore sso_acl_members for this set.
+    # Leave empty ("") to fall back to the explicit sso_acl_members list.
+    ad_group_name     = string
     local_acl_members = list(string)
     sso_acl_members   = list(string)
   }))
-  description = "Map of role set suffix → configuration. Each entry produces one full set of roles and an ACL."
+  description = "Map of role set suffix → configuration. Each entry produces one full set of roles and an ACL. Set ad_group_name to populate members from AD; leave empty to use sso_acl_members directly."
   default = {
     "db-admin" = {
       node_label_value  = "db_admin_prod"
       acl_title         = "DB Admin Prod"
       acl_description   = "Production database administrators"
+      ad_group_name     = "GRP-Teleport-DB-Admin"
       local_acl_members = []
-      sso_acl_members   = ["user+2@goteleport.com"]
+      sso_acl_members   = []
     }
     "k8s-ops" = {
       node_label_value  = "k8s_ops_staging"
       acl_title         = "K8s Ops Staging"
       acl_description   = "Kubernetes operators for staging cluster"
+      ad_group_name     = "GRP-Teleport-K8s-Ops"
       local_acl_members = []
-      sso_acl_members   = ["user+3@goteleport.com"]
+      sso_acl_members   = []
     }
     "sec-break-glass" = {
       node_label_value  = "security_break_glass"
       acl_title         = "Security Break Glass"
       acl_description   = "Emergency break-glass access for security team"
+      ad_group_name     = ""
       local_acl_members = []
       sso_acl_members   = ["user+2@goteleport.com", "user+4@goteleport.com"]
     }
   }
+}
+
+# ===========================================================================
+# Active Directory provider settings
+# ===========================================================================
+
+variable "ad_server_hostname" {
+  type        = string
+  description = "Hostname or IP of the 2025 Active Directory server (WinRM endpoint)"
+  default     = "ad.example.com"
+}
+
+variable "ad_bind_username" {
+  type        = string
+  description = "AD service-account UPN used for WinRM authentication (e.g. svc-terraform@corp.example.com)"
+  default     = "svc-terraform@corp.example.com"
+}
+
+variable "ad_bind_password" {
+  type        = string
+  description = "Password for the AD bind/service account. Store in a secrets manager or use TF_VAR_ad_bind_password."
+  sensitive   = true
+  default     = ""
+}
+
+variable "ad_winrm_port" {
+  type        = number
+  description = "WinRM port (5985 for HTTP, 5986 for HTTPS)"
+  default     = 5986
+}
+
+variable "ad_winrm_proto" {
+  type        = string
+  description = "WinRM protocol: 'http' or 'https'"
+  default     = "https"
+}
+
+variable "ad_winrm_insecure" {
+  type        = bool
+  description = "Skip TLS verification for WinRM. Set false in production."
+  default     = false
+}
+
+variable "ad_krb_realm" {
+  type        = string
+  description = "Kerberos realm (usually the uppercase AD domain, e.g. CORP.EXAMPLE.COM). Leave blank to use NTLM/basic auth."
+  default     = ""
+}
+
+variable "ad_krb_conf" {
+  type        = string
+  description = "Path to a krb5.conf file on the Terraform runner. Leave blank when not using Kerberos."
+  default     = ""
 }
