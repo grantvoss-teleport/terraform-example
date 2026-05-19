@@ -30,10 +30,12 @@ def main():
     password    = query["password"]
     group_name  = query["group_name"]
 
-    # Extract domain from username (DOMAIN\user or user@domain)
-    if "\\" in username:
-        domain = username.split("\\")[0]
-        ntlm_user = username
+    # ldap3 NTLM requires DOMAIN\username format.
+    # Convert UPN (user@domain.com) to DOMAIN\user if needed.
+    if "\\" not in username and "@" in username:
+        user_part, domain_part = username.split("@", 1)
+        ntlm_domain = domain_part.split(".")[0].upper()
+        ntlm_user = f"{ntlm_domain}\\{user_part}"
     else:
         ntlm_user = username
 
