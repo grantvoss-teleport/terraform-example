@@ -21,11 +21,11 @@ locals {
 
   # ---------------------------------------------------------------------------
   # AD-sourced members
-  # For each role_set that has a non-empty ad_group_name, collect the UPNs
-  # (userPrincipalName) of every AD group member returned by the data source.
-  # The hashicorp/ad provider exposes member DNs in
-  # data.ad_group_membership.<key>.group_members as a list of objects with a
-  # `dn` attribute; we map that to the `user_principal_name` attribute.
+  # The hashicorp/ad provider returns each group member's userPrincipalName
+  # (UPN) via the user_principal_name attribute — this is the full
+  # "firstname.lastname@corp.example.com" identity that Teleport sees when
+  # the user authenticates via SSO, so it must be used verbatim as the ACL
+  # member name.  SAMAccountNames are intentionally NOT used here.
   # ---------------------------------------------------------------------------
   ad_sourced_members = {
     for k, gm in data.ad_group_membership.role_set_members :
@@ -37,8 +37,8 @@ locals {
 
   # ---------------------------------------------------------------------------
   # Effective SSO members per role set:
-  # - If ad_group_name is set  → use the AD-sourced list (ignores sso_acl_members)
-  # - Otherwise                → fall back to the explicit sso_acl_members list
+  # - If ad_group_name is set  → UPNs from AD (ignores sso_acl_members)
+  # - Otherwise                → explicit sso_acl_members list
   # ---------------------------------------------------------------------------
   effective_sso_members = {
     for k, rs in var.role_sets :
@@ -46,23 +46,43 @@ locals {
   }
 
   # ---------------------------------------------------------------------------
-  # Flatten ALL members (local + effective SSO) across all role sets into a
-  # unique map keyed by "suffix/username" — used to create
-  # teleport_access_list_member resources.
+  # Flatten ALL members across all role sets into a unique map keyed by
+  # "suffix/username".  Each entry carries a membership_kind so the ACL
+  # resource knows whether to treat the user as an SSO identity or a local
+  # Teleport user:
+  #   0 = MEMBERSHIP_KIND_UNSPECIFIED (Teleport defaults this to SSO)
+  #   1 = MEMBERSHIP_KIND_USER        (local Teleport user)
+  #
+  # AD-sourced and explicit sso_acl_members both use kind 0 so Teleport
+  # matches them against the SSO identity (UPN) rather than expecting a
+  # pre-created local account.
   # ---------------------------------------------------------------------------
   all_members_flat = {
     for pair in flatten([
-      for suffix, rs in var.role_sets : [
-        for user in concat(rs.local_acl_members, local.effective_sso_members[suffix]) : {
-          key    = "${suffix}/${user}"
-          suffix = suffix
-          user   = user
-        }
-      ]
+      for suffix, rs in var.role_sets : concat(
+        # SSO / AD members — kind 0
+        [
+          for user in local.effective_sso_members[suffix] : {
+            key             = "${suffix}/${user}"
+            suffix          = suffix
+            user            = user
+            membership_kind = 0
+          }
+        ],
+        # Local Teleport users — kind 1
+        [
+          for user in rs.local_acl_members : {
+            key             = "${suffix}/${user}"
+            suffix          = suffix
+            user            = user
+            membership_kind = 1
+          }
+        ]
+      )
     ]) : pair.key => pair
   }
 
-  # Only local (non-SSO) users — for teleport_user creation
+  # Only local (non-SSO) users — for teleport_user resource creation
   unique_users = toset(flatten([
     for rs in var.role_sets : rs.local_acl_members
   ]))

@@ -85,6 +85,9 @@ resource "teleport_access_list" "exception_role" {
 
 # ---------------------------------------------------------------------------
 # ACL user members — one per (role set, user) pair
+# membership_kind comes from the flat map:
+#   0 = SSO / AD-sourced identity (matched by UPN at login time)
+#   1 = local Teleport user (pre-created teleport_user resource)
 # ---------------------------------------------------------------------------
 resource "teleport_access_list_member" "acl_members" {
   for_each = local.all_members_flat
@@ -99,7 +102,7 @@ resource "teleport_access_list_member" "acl_members" {
   spec = {
     access_list     = teleport_access_list.exception_role[each.value.suffix].id
     name            = each.value.user
-    membership_kind = 1 # MEMBERSHIP_KIND_USER
+    membership_kind = each.value.membership_kind
   }
 
   depends_on = [
